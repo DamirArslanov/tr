@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Как избежать ConcurrentModificationException во время итерации по ArrayList?</title>
+	<style type="text/css">
+		a {
+	    color: #21b384;
+	    text-decoration: none;
+		}
+
+		myCode {
+			font-weight: 800;
+			color: #353535;
+		  	padding: 2px;
+		    border: 1px solid #dfdfdf;
+		    background: #f5f5f5;
+		    -webkit-border-radius: 4px;
+		    border-radius: 4px;
+		    font-family: Ubuntu Mono,Consolas,Courier,monospace;
+		    font-size: 1rem;
+		}
+
+		p {
+			font: 16px/20px Open Sans,Arial,Helvetica,sans-serif;
+			line-height: 28px;
+		}
+
+		.img {
+			display: block;
+		    margin-left: auto;
+		    margin-right: auto
+		}
+		hr {
+			margin-top: 15px;
+		    margin-bottom: 15px;
+		    margin-left: 20%;
+		    margin-right: 20%;
+		    border: 0;
+		    border-top: 1px solid #d2cfcf;
+		}
+
+		h1 {
+			text-align:center;
+			font-family: 'Open Sans','Helvetica Neue',Arial,sans-serif;
+		}
+
+		.summary {
+			border: 1px solid #d2cfcf;
+			border-radius: 2px;
+			font-family: sans-serif;
+			line-height: 26px;
+			padding-top: 10px;
+			padding-right: 30px;
+			padding-bottom: 10px;
+			font-size: 18px;
+			/*color: #ecf5e6;*/
+			text-align: left;
+			/*background-color: #63a337;*/
+			margin-left: 10%;
+			margin-right: 15%;
+
+
+		}
+
+		.ob {
+			font-family: 'Open Sans','Helvetica Neue',Arial,sans-serif;
+			/*font-family: sans-serif;*/
+			font-size: 26px;
+			font-weight: bold;
+			text-align: center;
+		}
+
+		ol{
+		  counter-reset: myCounter;
+		}
+
+		li{
+		  list-style: none;
+		}
+
+		li:before {
+		  counter-increment: myCounter;
+		  content:counter(myCounter);
+		  color: white;
+		  background: #63a337;
+		  display: inline-block;
+		  text-align: center;
+		  margin: 0px 5px;
+		  line-height: 27px;
+		  width: 25px;
+		  height: 25px;
+		}
+		/*Закинуть это всё в файл*/
+		.hljs {
+		  display: block;
+		  overflow-x: auto;
+		  padding: 0.5em;
+		  background: #232323;
+		  color: #e6e1dc;
+		/*  margin-right: 20%;
+		  margin-left: 2%;*/
+		}
+
+		.hljs-comment,
+		.hljs-quote {
+		  color: #bc9458;
+		  font-style: italic;
+		}
+
+		.hljs-keyword,
+		.hljs-selector-tag {
+		  color: #c26230;
+		}
+
+		.hljs-string,
+		.hljs-number,
+		.hljs-regexp,
+		.hljs-variable,
+		.hljs-template-variable {
+		  color: #a5c261;
+		}
+
+		.hljs-subst {
+		  color: #519f50;
+		}
+
+		.hljs-tag,
+		.hljs-name {
+		  color: #e8bf6a;
+		}
+
+		.hljs-type {
+		  color: #da4939;
+		}
+
+
+		.hljs-symbol,
+		.hljs-bullet,
+		.hljs-built_in,
+		.hljs-builtin-name,
+		.hljs-attr,
+		.hljs-link {
+		  color: #6d9cbe;
+		}
+
+		.hljs-params {
+		  color: #d0d0ff;
+		}
+
+		.hljs-attribute {
+		  color: #cda869;
+		}
+
+		.hljs-meta {
+		  color: #9b859d;
+		}
+
+		.hljs-title,
+		.hljs-section {
+		  color: #ffc66d;
+		}
+
+		.hljs-addition {
+		  background-color: #144212;
+		  color: #e6e1dc;
+		  display: inline-block;
+		  width: 100%;
+		}
+
+		.hljs-deletion {
+		  background-color: #600;
+		  color: #e6e1dc;
+		  display: inline-block;
+		  width: 100%;
+		}
+
+		.hljs-selector-class {
+		  color: #9b703f;
+		}
+
+		.hljs-selector-id {
+		  color: #8b98ab;
+		}
+
+		.hljs-emphasis {
+		  font-style: italic;
+		}
+
+		.hljs-strong {
+		  font-weight: bold;
+		}
+
+		.hljs-link {
+		  text-decoration: underline;
+		}
+
+
+	</style>
+	<!-- <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/default.min.css"> -->
+	<script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+	<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+<div align="right" >
+		<a href="http://www.java67.com/2015/10/how-to-solve-concurrentmodificationexception-in-java-arraylist.html">Original by Javin Paul</a>
+	</div>
+	<div class="ob">
+ 	Как избежать ConcurrentModificationException во время итерации по ArrayList?</div>
+ 	<hr/>
+<p>Кроме <myCode>NullPointerException</myCode> и <myCode>ClassNotFoundException</myCode>, <myCode>ConcurrentModificationException</myCode> - еще один кошмар у Java - программистов. Что делает эту ошибку такой коварной? Слово - <myCode><b>Concurrent</b></myCode>. Оно всегда сбивает с толку Java - разработчика, потому что эта ошибка возникает тогда, когда одну коллекцию пытаются изменить несколько потоков одновременно. И начинается охота! Программист может потратить множество часов на безуспешные попытки отыскать кусок кода, где происходит одновременная модификация в несколько потоков. В то время как <myCode>ConcurrentModficationException</myCode>может возникать и при однопоточной модификации коллекции. Чтобы дать вам пример: попробуйте пройтись циклом <myCode>for</myCode> по списку и удалить один из элементов, вы получите <myCode>ConcurrentModificatoinExcetpion</myCode>. Почему? Потому что вы нарушили правило: <b>не изменять коллекцию во время итерации!</b>
+
+<p>Как Java понимает, что нужно бросить <myCode>ConcurrentModificationException</myCode>? Для это используется специальный <myCode>transient variable</myCode> (временная переменная) <myCode><b>modCount</b></myCode>, который хранит в себе информацию о том, сколько раз коллекция была структурно модифицирована. Под структурными модификациями подразумеваются такие модификации, которые изменяют размер коллекции, которые могут повлиять на прогресс итерации и на результат. <myCode>Iterator</myCode> и <myCode>ListIterator</myCode> используют вышеописанное поле для того, чтобы выявлять непредвиденные изменения. Другие методы коллекции, изменяющие ее структуру, так же используют это поле, к примеру методы <myCode>add()</myCode>, <myCode>remove()</myCode>;
+
+<p><b>Проблема:</b> Есть цикл в <myCode>ArrayList</myCode> и необходимо удалить выбранные элементы из этой коллекции, но <myCode>remove()</myCode> бросает <myCode>"Exception in thread "main" java.util.ConcurrentModificationException"</myCode>.
+
+<p><b>Причина:</b> Настоящая причина бросания <myCode>ConcurrentModfiicationException</myCode> в противоречивом <myCode>modCount</myCode>. Когда мы проходите итератором по <myCode>ArrayList</myCode>, метод <myCode>next()</myCode> держит в памяти значение <myCode>modCount</myCode>. И когда вы модифицируете коллекцию путем добавления или удаления элементов - значение <myCode>modCount</myCode> меняется, что в итоге не совпадает с ожидаемым значением у итератора и он бросает <myCode>ConcurrentModificationException</myCode>.
+
+<p>Вот кусок кода из метода <myCode>hasNext()</myCode>, который показывает проверку <myCode>modCount</myCode>.
+
+<pre>
+	<code class="java vs">
+	public E next() {
+	 checkForComodification();
+	 int i = cursor;
+	 if (i >= size) {
+	     throw new NoSuchElementException();
+	 }
+	 Object[] elementData = ArrayList.this.elementData;
+	 if (i >= elementData.length) {
+	     throw new ConcurrentModificationException();
+	 }
+	 cursor = i + 1;
+	 return (E) elementData[lastRet = i];
+	}
+	</code>
+</pre>
+<p>Теперь если вы посморите на метод <myCode>checkForComodification()</myCode>, то убедитесь в том, о чем я говорил ранее:</p>
+<pre>
+	<code class="java vs">
+	final void checkForComodification() {
+	 if (modCount != expectedModCount) throw new ConcurrentModificationException();
+	}
+	</code>
+</pre>
+<p><b>Решение:</b> используйте <myCode>Iterator</myCode>, если вы в однопоточной среде, в противном случае используйте <myCode>Concurrent Collection</myCode>, к примеру, <myCode>CopyOnWriteArrayList</myCode> для удаления элементов во время прохождения итерации.
+
+
+<hr>
+<div class="ob">Решение ConcurrentModificationException в ArrayList.</div>
+
+<p>Вот пример Java - программы, в которой демонстрируется сценарий получения ошибки <myCode>ConcurrentModificationException</myCode>, даже если мы модифицируем <myCode>ArrayList</myCode> ее в один поток. В этом примере мы пробегаем по <myCode>ArrayList</myCode> с помощью <myCode>foreach - цикла</myCode> и удаляем выбранный элемент, но для удаления мы используем метод <myCode>remove()</myCode>;
+
+<pre>
+	<code class="java vs">
+	import java.util.ArrayList;
+	import java.util.Arrays;
+	import java.util.Iterator;
+	import java.util.List;
+
+	 /**
+	 * Java - программа демонстрирующая ошибку
+	 * * ConcurrentModificationException.
+	 * * Несмотря на название, эта ошибка может произойти
+	 * * и при однопоточной модификации коллекции.
+	 * * Например, если удалили или добавили элемент
+	 * *  во время итерации по коллекции.
+	 * * 
+	 * * Если Вам необходимо удалить элемент,
+	 * * то используйте метод Итератора remove(),
+	 * * т.к. метод remove() из ArrayList
+	 * * может бросить ConcurrentModificationExcetpion.
+	 * * 
+	 * * @author WINDOWS 8 *
+	 */
+
+
+	public class ConcurrentModExceptionDemo {
+	    public static void main(String args[]) {
+	        List<String> listOfPhones = new ArrayList<String>(
+	                Arrays.asList("iPhone 6S", "iPhone 6", "iPhone 5", "Samsung Galaxy 4", "Lumia Nokia"));
+	        System.out.println("list of phones: " + listOfPhones);
+	        // Пройдемся по коллекции и удалим элемент
+	        // Это плохая практика, т.к. мы получим ConcurrentModificationException
+	        for (String phone : listOfPhones) {
+	            if (phone.startsWith("iPhone")) {
+	                // listOfPhones.remove(phone); // кинет ошибку
+	            }
+	        }
+	        // Хорошая практика использовать метод из Iterator'а remove()
+	        for (Iterator<String> itr = listOfPhones.iterator(); itr.hasNext(); ) {
+	            String phone = itr.next();
+	            if (phone.startsWith("iPhone")) {
+	                // listOfPhones.remove(phone); // снова будет ошибка
+	                itr.remove(); // хороший выбор
+	            }
+	        }
+	        System.out.println("list after removal: " + listOfPhones);
+	    }
+	}
+
+
+
+	Output : 
+	list of phones: [iPhone 6S, iPhone 6, iPhone 5, Samsung Galaxy 4, Lumia Nokia]
+	list after removal: [Samsung Galaxy 4, Lumia Nokia]
+	</code>
+</pre>
+
+<p>Если вы раскоментируете код в первом и во втором цикле, то вы получите ошибку: 
+
+
+<pre>
+	<code class="java vs">
+	Exception in thread "main" java.util.ConcurrentModificationException
+        at java.util.ArrayList$Itr.checkForComodification(Unknown Source)
+        at java.util.ArrayList$Itr.next(Unknown Source)
+        at dto.ReverseArrayInPlace.main(ReverseArrayInPlace.java:28)
+	</code>
+</pre>
+
+<p>Потому что вы используете метод <myCode>remove()</myCode> из <myCode>ArrayList</myCode>. И о втором цикле: мы используем <myCode>remove()</myCode> метод с итератором и поэтому успешно удалили выбранные элементы из <myCode>ArrayList</myCode> избежав ошибки <myCode>ConcurrentModificationException</myCode>.
+
+
+<p>И суммируем информацию по решению возникающей ошибки <myCode>ConcurrentModificationException</myCode> во время работы с <myCode>ArrayList</myCode>:
+
+<div class="summary">
+<div class="ob">
+	ConcurrentModificationException в Java
+</div>
+
+<hr>
+<ol type="1"">
+  <li>Может возникнуть, если два потока одновременно пытаются изменить одну коллекцию, - один поток проходит коллекцию, а другой в этот момент удаляет элементы из этой коллекции.</li>
+  <li> Но чаще всего это возникает, когда вы используете метод <myCode>remove()</myCode> из <myCode>ArrayList</myCode> во время прохода по коллекции.</li>
+  <li> Всегда используйте метод Итератора (Iterator) <myCode>remove()</myCode>, для удаления элементов по время обхода коллекции</li>
+  <li> Не удаляйте элементы , когда обходите коллекцию с помощью <myCode>foreach</myCode>, он не предоставляет метод аналогичный методу Итератора <myCode>remove()</myCode>, но может бросить ошибку <myCode>ConcurrentModificationException</myCode>, если вы попытаетесь удалить елемент из коллекции с помощью метода <myCode>remove()</myCode> из <myCode>ArrayList</myCode>.</li>
+</ol>
+</div>  
+
+
+<p>Вот и всё, что касается ошибки <myCode>ConcurrentModificationException</myCode> в Java. Самое главное - помнить о том, что эта ошибка может появиться и в однопоточном окружении, например, при удалении елементов из коллекции.
+<hr/>
+</body>
+</html>
