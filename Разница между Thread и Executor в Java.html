@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Разница между Thread и Executor в Java</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <style type="text/css">
+        a {
+            color: #21b384;
+            text-decoration: none;
+        }
+
+        myCode {
+            font-weight: 800;
+            color: #353535;
+            padding: 2px;
+            border: 1px solid #dfdfdf;
+            background: #f5f5f5;
+            -webkit-border-radius: 4px;
+            border-radius: 4px;
+            font-family: Ubuntu Mono, Consolas, Courier, monospace;
+            font-size: 1rem;
+        }
+
+        p {
+            font: 16px/20px Open Sans, Arial, Helvetica, sans-serif;
+            line-height: 28px;
+        }
+
+        .img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto
+        }
+
+        hr {
+            margin-top: 15px;
+            margin-bottom: 15px;
+            margin-left: 20%;
+            margin-right: 20%;
+            border: 0;
+            border-top: 1px solid #d2cfcf;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .summary {
+            border: 1px solid #d2cfcf;
+            border-radius: 2px;
+            font-family: sans-serif;
+            line-height: 30px;
+            padding-top: 10px;
+            padding-right: 30px;
+            padding-bottom: 10px;
+            font-size: 18px;
+            /*color: #ecf5e6;*/
+            text-align: left;
+            /*background-color: #63a337;*/
+          /*  margin-left: 10%;
+            margin-right: 15%;*/
+
+        }
+
+        .ob {
+            font-family: 'Open Sans', 'Helvetica Neue', Arial, sans-serif;
+            /*font-family: sans-serif;*/
+            font-size: 26px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        ol {
+            counter-reset: myCounter;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        li:before {
+            counter-increment: myCounter;
+            content: counter(myCounter);
+            color: white;
+            background: #63a337;
+            display: inline-block;
+            text-align: center;
+            margin: 0px 5px;
+            line-height: 27px;
+            width: 25px;
+            height: 25px;
+        }
+
+        /*Закинуть это всё в файл*/
+        .hljs {
+            display: block;
+            overflow-x: auto;
+            padding: 0.5em;
+            background: #232323;
+            color: #e6e1dc;
+            /*  margin-right: 20%;
+              margin-left: 2%;*/
+        }
+
+        .hljs-comment,
+        .hljs-quote {
+            color: #bc9458;
+            font-style: italic;
+        }
+
+        .hljs-keyword,
+        .hljs-selector-tag {
+            color: #c26230;
+        }
+
+        .hljs-string,
+        .hljs-number,
+        .hljs-regexp,
+        .hljs-variable,
+        .hljs-template-variable {
+            color: #a5c261;
+        }
+
+        .hljs-subst {
+            color: #519f50;
+        }
+
+        .hljs-tag,
+        .hljs-name {
+            color: #e8bf6a;
+        }
+
+        .hljs-type {
+            color: #da4939;
+        }
+
+        .hljs-symbol,
+        .hljs-bullet,
+        .hljs-built_in,
+        .hljs-builtin-name,
+        .hljs-attr,
+        .hljs-link {
+            color: #6d9cbe;
+        }
+
+        .hljs-params {
+            color: #d0d0ff;
+        }
+
+        .hljs-attribute {
+            color: #cda869;
+        }
+
+        .hljs-meta {
+            color: #9b859d;
+        }
+
+        .hljs-title,
+        .hljs-section {
+            color: #ffc66d;
+        }
+
+        .hljs-addition {
+            background-color: #144212;
+            color: #e6e1dc;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .hljs-deletion {
+            background-color: #600;
+            color: #e6e1dc;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .hljs-selector-class {
+            color: #9b703f;
+        }
+
+        .hljs-selector-id {
+            color: #8b98ab;
+        }
+
+        .hljs-emphasis {
+            font-style: italic;
+        }
+
+        .hljs-strong {
+            font-weight: bold;
+        }
+
+        .hljs-link {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+<div align="right">
+    <a href="http://javarevisited.blogspot.ru/2016/12/difference-between-thread-and-executor.html">Original
+        by Javin Paul</a>
+</div>
+<div class="ob">Разница между Thread и Executor в Java</div>
+<hr/>
+
+<p>
+    <myCode>Thread</myCode>и<myCode>Executor</myCode>
+    используются для многопоточных задач, но между ними есть несколько различий. Главным отличием между <myCode>Thread</myCode>
+    и <myCode>Executor</myCode> является то, что последний предоставляет пул потоков (thread pool). Вместе с несколькими утилитами
+    параллелизма: <myCode>CountDownLatch</myCode>, <myCode>CyclicBarrier</myCode>, <myCode>Semaphore</myCode>, <myCode>FutureTask</myCode>, <myCode>Callable interface</myCode>, и <myCode>Conditions</myCode>, в JDK 5 также
+    ввели встроенный пул потоков, который позволяет задавать сколько рабочих потоков будет запущено в вашем коде,
+    требующего параллельного выполнения. Поскольку создание и запуск потока трудоемкая и затратная операция, то многие
+    Java - приложения создавали свой пул потоков на начальном этапе и использовали его для многопоточных задач, пока Java не представила встроенный пул потоков. Этот пул потоков известен как <myCode>Executor framework</myCode>,
+    он призван освободить разработчика от ответственности по созданию и менеджменту потоков.
+
+<p>В JDK 1.5 <myCode>Executor Framework</myCode> представляет собой комбинацию из <myCode>Executor</myCode>, <myCode>Executors</myCode>, и интерфейса <myCode>ExecutorService</myCode>,
+    обеспечивающий работоспособный и функциональный пул потоков в Java. Кстати, в этом и есть фундаментальное различие
+    между <myCode>Thread</myCode> и <myCode>Executor</myCode> в Java, рассмотрим еще несколько примеров для лучшего понимания.
+<hr/>
+<div class="ob">Thread vs Executor в Java</div>
+
+<p>Как я уже сказал <myCode>Thread</myCode> позволяет запускать код в многопоточном режиме, для этого нужно или наследоваться от класса
+    <myCode>java.lang.Thread</myCode> или имплементировать интерфейс <myCode>java.lang.Runnable</myCode>. Хотя оба подхода хорошо работают в небольших
+    приложениях, у них есть свои плюсы и минусы. С другой стороны, <myCode>Executor</myCode> - это тоже
+    интерфейс предоставляющий параллельное выполнение кода, но он использует пул потоков, что подходит для больших
+    приложений.
+<div class="summary">
+	<ol type="1"">
+		<li>В первую очередь <myCode>java.lang.Thread</myCode> - это класс, а <myCode>java.util.concurrent.Executor</myCode> - интерфейс.</li>
+		<li>Концепция <myCode>Executor</myCode> фактически является абстракцией в параллельном выполнении кода. Он позволяет запускать параллельный
+    код в управляемом виде. С другой стороны <myCode>Thread</myCode> является конкретным способом для параллельного выполнения кода.
+</li>
+		<li>Третьим различием между <myCode>Executor</myCode> и <myCode>Thread</myCode> является то, что у <myCode>Executor</myCode> нет тесной связи между задачей (код
+    требующий параллельного исполнения) и самим потоком, у <myCode>Thread</myCode> всё наоборот - задача и поток-исполнитель тесно
+    связаны. Дополнительно вы можете почитать книгу <a href="https://www.amazon.com/dp/0321349601/">Java Concurrency in
+        Practice Brian Goetz</a>, чтобы еще детальнее рассмотреть то, как отделение потока-исполнителя от задачи (слабая
+    связь) упрощает проектирование многопоточных приложении.</li>
+		<li><myCode>Executor</myCode> работает с вашей задачей (с кодом) с помощью потоков из пула потоков, <myCode>Thread</myCode> же выполняет эту работу сам.</li>
+		<li><myCode>Executor</myCode> имеет метод <myCode>execute()</myCode> принимающий <myCode>Runnable-задачу</myCode>, <myCode>Thread</myCode> принимает <myCode>Runnable-задачу</myCode> в конструкторе.
+</li>
+		<li>Еще одно отличие: <myCode>Thread</myCode> может выполнить только одну <myCode>Runnable-задачу</myCode>, <myCode>Executor</myCode> - сколько угодно.</li>
+		<li>В случае с <myCode>Thread</myCode> задача выполняется в потоке, который принимает <myCode>Runnable</myCode> экземпляр, с <myCode>Executor</myCode> задача может
+    выполняться как в новом потоке, так и в потоке из пула, ну или в самом вызвывающем потоке, в зависимости от
+    реализации интерфейса <myCode>Executor</myCode>.</li>
+		<li>При использовании <myCode>Thread</myCode> разработчику самому нужно создавать и запускать поток, а при использовании <myCode>Executor</myCode> -
+    фреймворк сам создаст и запустить для вас потоки, при желании контролировать данные процессы, вы можете написать
+    реализацию <myCode>Executor</myCode>-интерфейса. Хотя с нововведениями <myCode>ForkJoinPool</myCode> в Java 7 и 8, вы, возможно, захотите использовать
+    его, вместо <myCode>Executor</myCode>. Если вы не знакомы с <myCode>ForkJoinPool</myCode>, то рекомендую к прочтению книгу <a
+            href="https://www.amazon.com/Java-Action-Lambdas-functional-style-programming/dp/1617291994">Java 8 in
+        Action</a>.</li>
+	</ol>
+	</div>
+  
+
+<p>Рассмотрим пример кода с выполнением <myCode>Runnable-задачи</myCode> с помощью <myCode>Thread</myCode> и <myCode>Executor</myCode>.
+<pre>
+	<code class="java vs">
+	import java.util.concurrent.Executor;
+	import java.util.concurrent.Executors;
+
+	public class Main {
+	    public static void main(String args[]) {
+	        Runnable task = new Runnable() {
+	            @Override
+	            public void run() {
+	                System.out.println("Task is executed by : " + Thread.currentThread().getName());
+	            }
+	        };
+	        Thread t = new Thread(task, "MY_THREAD");
+	        t.start();
+	        Executor e = Executors.newSingleThreadExecutor();
+	        e.execute(task);
+	    }
+	}
+
+
+	Output
+	Task is executed by MY_THREAD
+	Task is executed by pool-1-thread-1
+	</code>
+</pre>
+
+<p>Разница очевидна, вначале это простой поток, позже - пул потоков.
+
+<p>Также стоит отметить фабричный метод <myCode>Executor'a</myCode> типа <myCode>newSingleThreadExecutor()</myCode>, возвращающий <myCode>ExecutorService</myCode>, который
+    расширяет интерфейс <myCode>Executor</myCode> и предоставляет метод принимающий <myCode>Callable</myCode> объект, плюс методы для завершения и
+    закрытия пула потоков.
+
+<p>Это всё, о чем я хотел рассказать по теме различия <myCode>Thread</myCode> и <myCode>Executor</myCode> в Java. Несмотря на то, что оба они выполняют
+    схожие задачи, всё же имеют разный подход. Thread представляет собой нечто ответственное за выполнение вашей задачи в
+    потоке, <myCode>Executor</myCode> же - некая абстракция, предназначенная для выполнения многопоточных задач. В <myCode>Executor</myCode> потоки и
+    задачи не связаны, не зависят друг от друга, в случае с <myCode>Thread</myCode> - поток тесно связан с задачей.
+    <ht/>
+</body>
+</html>
